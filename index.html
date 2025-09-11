@@ -1,470 +1,180 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Gun Game - realistyczna scena</title>
-  <style>
-    html, body {
-      margin: 0;
-      overflow: hidden;
-      height: 100%;
-      user-select: none;
-    }
-
-    #scene {
-      position: absolute;
-      width: 2000px;
-      height: 2000px;
-      background-color: #3498db;
-      background-image:
-        linear-gradient(#ffffff33 1px, transparent 1px),
-        linear-gradient(90deg, #ffffff33 1px, transparent 1px);
-      background-size: 100px 100px;
-      cursor: grab;
-    }
-
-    #coords {
-      position: fixed;
-      top: 10px;
-      left: 10px;
-      background: rgba(0,0,0,0.5);
-      color: white;
-      padding: 5px 10px;
-      border-radius: 5px;
-      font-family: monospace;
-      font-size: 14px;
-      pointer-events: none;
-      z-index: 1000;
-    }
-
-    /* Pistolet */
-    #gun {
-      position: absolute;
-      width: 100px;
-      height: 40px;
-      background: #222;
-      border-radius: 8px 8px 4px 4px;
-      box-shadow: 2px 2px 6px #0008;
-      z-index: 10;
-      left: 900px;
-      top: 900px;
-    }
-
-    #gun-top {
-      position: absolute;
-      width: 60px;
-      height: 20px;
-      background: #333;
-      border-radius: 4px;
-      left: 20px;
-      top: -10px;
-      transition: left 0.3s;
-      cursor: grab;
-    }
-
-  /* Magazynek */
-  #magazine {
-    position: absolute;
-    width: 40px;
-    height: 30px;
-    background: gray;
-    border: 2px solid #222;
-    border-radius: 3px;
-    cursor: move;
-    z-index: 15;
-    left: 920px; /* bottom of gun */
-    top: 940px;  /* bottom of gun */
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz: Juke's Towers of Hell</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+    padding: 20px;
+    transition: background-color 0.3s;
+    text-align: center;
   }
-
-    /* Nabój */
-    .ammo {
-      position: absolute;
-      width: 15px;
-      height: 25px;
-      background: gold;
-      border: 1px solid #444;
-      border-radius: 3px;
-      cursor: move;
-      z-index: 20;
-    }
-
-    /* Pocisk przy strzale */
-    .bullet {
-      position: absolute;
-      width: 12px;
-      height: 12px;
-      background: orange;
-      border-radius: 50%;
-      box-shadow: 0 0 10px 4px orange;
-      z-index: 100;
-    }
-
-    /* Ekran ładowania */
-    #overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: #222;
-      color: white;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 20px;
-      z-index: 2000;
-    }
-
-    .button {
-      padding: 10px 20px;
-      background: #3498db;
-      border: none;
-      border-radius: 5px;
-      color: white;
-      font-size: 18px;
-      cursor: pointer;
-    }
-  </style>
+  h1 { font-size: 32px; margin-bottom: 10px; }
+  p { font-size: 20px; margin: 5px; }
+  .linkText { font-size: 24px; cursor: pointer; color: #007BFF; text-decoration: underline; }
+  #startBtn {
+    font-size: 24px;
+    padding: 15px 30px;
+    border: none;
+    border-radius: 10px;
+    background-color: #007BFF;
+    color: white;
+    cursor: pointer;
+    margin-top: 30px;
+  }
+  #countdown { font-size: 48px; font-weight: bold; margin-bottom: 20px; display: none; }
+  #timer { font-size: 24px; margin-bottom: 20px; display: none; }
+  #quizImage { max-width: 80%; max-height: 400px; margin-bottom: 20px; display: none; }
+  #answerBox { display: flex; flex-direction: column; align-items: center; display: none; }
+  input[type="text"] { font-size: 18px; padding: 10px; width: 300px; border-radius: 5px; border: 1px solid #ccc; margin-bottom: 10px; }
+</style>
 </head>
 <body>
 
-<div id="coords">X: 0, Y: 0</div>
+<h1>Made by Ashout</h1>
+<p>for <span class="linkText" id="serpluz">Serpluz</span></p>
+<p>and for <span class="linkText" id="diamond">Diamond Boi</span></p>
+<button id="startBtn">Start Quiz</button>
 
-<div id="overlay">
-  <div style="font-size: 32px; font-weight: bold;">Gun Game</div>
-  <button class="button" id="playBtn">Play</button>
-</div>
-
-<div id="scene">
-  <div id="gun">
-    <div id="gun-top"></div>
-  </div>
-  <div id="magazine" title="Przeciągnij do pistoletu i przesuń w lewo aby załadować"></div>
-  <!-- Pociski będą dodane dynamicznie -->
+<div id="countdown"></div>
+<div id="timer"></div>
+<img id="quizImage" src="" alt="Quiz Image">
+<div id="answerBox">
+  <input type="text" id="answerInput" placeholder="Type your answer..." autocomplete="off">
 </div>
 
 <script>
-  let magInserted = false;
-  var magazineLoaded = false;
-  let ammoCount = 0;
-  let loadedAmmoCount = 0; // Number of bullets loaded into magazine
-  const maxAmmo = 12;
+const images = [
+  { src: "https://static.wikia.nocookie.net/ktoh/images/f/fc/ToH_R1_Revamp.png/revision/latest?cb=20250716171641", answer: "Tower of Hecc" },
+  { src: "https://static.wikia.nocookie.net/ktoh/images/5/59/ToCP_image_hq.png/revision/latest?cb=20220912002351", answer: "Tower of Cruel Punishment" },
+  { src: "https://static.wikia.nocookie.net/ktoh/images/4/4b/CoLS_R1_Revamp.png/revision/latest?cb=20250310183034", answer: "Citadel of Laptop Splitting" },
+  { src: "https://static.wikia.nocookie.net/ktoh/images/0/05/ToHH_image_hq.png/revision/latest?cb=20221207023038", answer: "Tower of Hopeless Hell" },
+  { src: "https://static.wikia.nocookie.net/ktoh/images/6/60/ToTS_R1_Revamp.png/revision/latest?cb=20250310183111", answer: "Tower of True Skill" },
+  { src: "https://static.wikia.nocookie.net/ktoh/images/3/3b/ToBK_image_hq.png/revision/latest?cb=20220912002300", answer: "Tower of Bloodthirsty Kenos" },
+  { src: "https://static.wikia.nocookie.net/ktoh/images/a/ae/NEW_ToDT.png/revision/latest?cb=20250424182737", answer: "Tower of Double Trouble" },
+  { src: "https://static.wikia.nocookie.net/ktoh/images/8/81/ToII_image_hq.png/revision/latest?cb=20220924200429", answer: "Tower of Immense Ire" },
+  { src: "https://static.wikia.nocookie.net/ktoh/images/1/1a/CoWS-New.png/revision/latest?cb=20250301143953", answer: "Citadel of Wacky Strategy" },
+  { src: "https://static.wikia.nocookie.net/ktoh/images/4/4c/SoUR_image_hq.png/revision/latest?cb=20220924200342", answer: "Steeple of Uninstalling Roblox" },
+  { src: "https://static.wikia.nocookie.net/ktoh/images/7/7d/ToPS-New.png/revision/latest?cb=20250301141304", answer: "Tower of Phone Snapping" },
+  { src: "https://static.wikia.nocookie.net/ktoh/images/0/05/Tower_of_Utter_Garbage.png/revision/latest?cb=20250618122432", answer: "Tower of Fatness" },
+  { src: "https://static.wikia.nocookie.net/ktoh/images/1/10/ToBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB.png/revision/latest?cb=20241016212510", answer: "Tower of Big Blocky Beefy Buttons" },
+  { src: "https://static.wikia.nocookie.net/ktoh/images/0/06/ToBBB_image_hq.png/revision/latest?cb=20220912002240", answer: "Tower of Beat Block Berserk" },
+  { src: "https://static.wikia.nocookie.net/ktoh/images/9/9c/ToAF_image_hq.png/revision/latest?cb=20220918225748", answer: "Tower of Astral Fusion" },
+  { src: "https://static.wikia.nocookie.net/ktoh/images/f/fc/ToFaF-New.png/revision/latest?cb=20250301141847", answer: "Tower of Falling and Failing" },
+  { src: "https://static.wikia.nocookie.net/ktoh/images/8/81/CoIV_image_hq.png/revision/latest?cb=20221011221103", answer: "Citadel of Infinite Void" },
+  { src: "https://static.wikia.nocookie.net/ktoh/images/a/af/SoO_image_hq.png/revision/latest?cb=20221007213244", answer: "Steeple of Overgrowth" },
+  { src: "https://static.wikia.nocookie.net/ktoh/images/4/40/ToFM_image_hq.png/revision/latest?cb=20220911194224", answer: "Tower of Fractured Memories" },
+  { src: "https://static.wikia.nocookie.net/ktoh/images/b/b3/Tofn_new.png/revision/latest?cb=20241020172709", answer: "Tower of Frightening Nightmares" },
+  { src: "https://static.wikia.nocookie.net/ktoh/images/8/8c/ToNI_R1_Revamp.png/revision/latest?cb=20250310183335", answer: "Tower of Noticeable Infuriation" },
+  { src: "https://static.wikia.nocookie.net/ktoh/images/5/57/TT_R1_Revamp.png/revision/latest?cb=20250310182929", answer: "Thanos Tower" },
+  { src: "https://static.wikia.nocookie.net/ktoh/images/2/26/SoBJ_image_hq.png/revision/latest?cb=20221007213044", answer: "Steeple of Beginner's Journey" },
+  { src: "https://static.wikia.nocookie.net/ktoh/images/0/05/SoDS_image_hq.png/revision/latest?cb=20221007213059", answer: "Steeple of Devil's Snare" },
+  { src: "https://static.wikia.nocookie.net/ktoh/images/e/e4/ToES-new.png/revision/latest?cb=20250301143039", answer: "Tower of Eternal Suffering" },
+  { src: "https://static.wikia.nocookie.net/ktoh/images/4/42/ToJ_image_hq.png/revision/latest?cb=20220909163944", answer: "Tower of Jazz" },
+  { src: "https://static.wikia.nocookie.net/ktoh/images/e/ec/SoIF_image_hq.png/revision/latest?cb=20221007213155", answer: "Steeple of Infectious Foliage" },
+  { src: "https://static.wikia.nocookie.net/ktoh/images/4/4c/SoUR_image_hq.png/revision/latest?cb=20220924200342", answer: "Tower of Cold Hands" }
+];
 
-  const scene = document.getElementById('scene');
-  const coordsDisplay = document.getElementById('coords');
-  const gun = document.getElementById('gun');
-  const gunTop = document.getElementById('gun-top');
-  const mag = document.getElementById('magazine');
-  const overlay = document.getElementById('overlay');
-  const playBtn = document.getElementById('playBtn');
+let currentQuestion = 0;
+let timerInterval;
 
-  let translateX = 0, translateY = 0;
+const answerInput = document.getElementById("answerInput");
+const quizImage = document.getElementById("quizImage");
+const timerDisplay = document.getElementById("timer");
+const countdownDisplay = document.getElementById("countdown");
+const body = document.body;
+const startBtn = document.getElementById("startBtn");
+const answerBox = document.getElementById("answerBox");
+const serpluzText = document.getElementById("serpluz");
+const diamondText = document.getElementById("diamond");
 
-  // Add keyboard controls for scene movement using W, A, S, D keys
-  const moveSpeed = 20;
+serpluzText.addEventListener("click", () => window.open("https://www.youtube.com/@SerpluzEToH", "_blank"));
+diamondText.addEventListener("click", () => window.open("https://www.youtube.com/@DiamondBoiRBX", "_blank"));
 
-  window.addEventListener('keydown', (e) => {
-    switch (e.key.toLowerCase()) {
-      case 'w':
-        translateY += moveSpeed;
-        break;
-      case 's':
-        translateY -= moveSpeed;
-        break;
-      case 'a':
-        translateX += moveSpeed;
-        break;
-      case 'd':
-        translateX -= moveSpeed;
-        break;
-      default:
-        return; // Ignore other keys
-    }
-    scene.style.transform = `translate(${translateX}px, ${translateY}px)`;
-    coordsDisplay.textContent = `X: ${-translateX}, Y: ${-translateY}`;
-    if (!magInserted) checkMagInserted();
-  });
-
-  // Gun-top drag interaction for realistic magazine loading
-  let isDraggingGunTop = false;
-  let startGunTopX = 0;
-  let shellEjected = false;
-
-  const loadSound = new Audio('https://actions.google.com/sounds/v1/metal/metal_thin_hit_and_stick.ogg');
-
-  function playLoadSound() {
-    loadSound.currentTime = 0;
-    loadSound.play();
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
   }
+}
 
-  gunTop.style.cursor = 'grab';
+function startQuiz() {
+  startBtn.style.display = "none";
+  serpluzText.style.display = "none";
+  diamondText.style.display = "none";
+  document.querySelector("h1").style.display = "none";
+  document.querySelectorAll("p").forEach(p => p.style.display = "none");
+  startCountdown();
+}
 
-  gunTop.addEventListener('mousedown', (e) => {
-    e.preventDefault();
-    isDraggingGunTop = true;
-    startGunTopX = e.clientX;
-    gunTop.style.cursor = 'grabbing';
-  });
-
-  document.addEventListener('mousemove', (e) => {
-    if (!isDraggingGunTop) return;
-    let dx = e.clientX - startGunTopX;
-    let newLeft = 20 + dx; // original left is 20px
-
-    // Limit movement between -40px and 20px
-    if (newLeft < -40) newLeft = -40;
-    if (newLeft > 20) newLeft = 20;
-
-    gunTop.style.left = newLeft + 'px';
-
-    if (magInserted) {
-      if (newLeft <= -30 && !shellEjected) {
-        shellEjected = true;
-        ejectShell();
-        playLoadSound();
-      }
-
-      if (newLeft >= -10 && shellEjected && !magazineLoaded) {
-        magazineLoaded = true;
-        console.log('Magazine loaded set to true');
-        mag.style.borderColor = 'limegreen';
-        ammoCount = loadedAmmoCount;
-        shellEjected = false;
-        playLoadSound();
-      }
+function startCountdown() {
+  let count = 3;
+  countdownDisplay.style.display = "block";
+  countdownDisplay.textContent = count;
+  const interval = setInterval(() => {
+    count--;
+    if (count > 0) countdownDisplay.textContent = count;
+    else {
+      clearInterval(interval);
+      countdownDisplay.style.display = "none";
+      startTimer(30 * 60);
+      showQuestion();
     }
-  });
+  }, 1000);
+}
 
-  document.addEventListener('mouseup', (e) => {
-    if (isDraggingGunTop) {
-      isDraggingGunTop = false;
-      gunTop.style.cursor = 'grab';
-
-      if (!magazineLoaded) {
-        gunTop.style.left = '20px';
-      }
+function startTimer(duration) {
+  let time = duration;
+  timerDisplay.style.display = "block";
+  timerInterval = setInterval(() => {
+    const minutes = Math.floor(time / 60);
+    const seconds = time % 60;
+    timerDisplay.textContent = `${String(minutes).padStart(2,"0")}:${String(seconds).padStart(2,"0")}`;
+    if (--time < 0) {
+      clearInterval(timerInterval);
+      timerDisplay.textContent = "Time's up!";
     }
-  });
+  }, 1000);
+}
 
-  function ejectShell() {
-    console.log('Ejecting shell');
-    const shell = document.createElement('div');
-    shell.style.position = 'absolute';
-    shell.style.width = '10px';
-    shell.style.height = '5px';
-    shell.style.background = 'silver';
-    shell.style.borderRadius = '2px';
-    shell.style.left = (gun.getBoundingClientRect().right - 10) + 'px';
-    shell.style.top = (gun.getBoundingClientRect().top + 10) + 'px';
-    shell.style.zIndex = 50;
-    document.body.appendChild(shell);
-
-    let startTime = null;
-    function animateShell(time) {
-      if (!startTime) startTime = time;
-      const elapsed = time - startTime;
-      shell.style.left = (gun.getBoundingClientRect().right - 10 + elapsed * 0.5) + 'px';
-      shell.style.top = (gun.getBoundingClientRect().top + 10 - elapsed * 0.3) + 'px';
-      shell.style.opacity = 1 - elapsed / 1000;
-      if (elapsed < 1000) {
-        requestAnimationFrame(animateShell);
-      } else {
-        shell.remove();
-      }
-    }
-    requestAnimationFrame(animateShell);
+function showQuestion() {
+  if (currentQuestion >= images.length) {
+    quizImage.style.display = "none";
+    timerDisplay.style.display = "none";
+    answerBox.style.display = "none";
+    alert("Quiz finished!");
+    return;
   }
+  const question = images[currentQuestion];
+  quizImage.src = question.src;
+  quizImage.style.display = "block";
+  answerBox.style.display = "flex";
+  answerInput.value = "";
+  answerInput.focus();
+}
 
-  function checkMagInserted() {
-    const gunRect = gun.getBoundingClientRect();
-    const magRect = mag.getBoundingClientRect();
-
-    if (loadedAmmoCount === 0) {
-      magInserted = false;
-      return false;
-    }
-
-    if (
-      magRect.right > gunRect.left &&
-      magRect.left < gunRect.right &&
-      magRect.bottom > gunRect.top + 20 &&
-      magRect.top < gunRect.bottom
-    ) {
-      magInserted = true;
-      mag.style.display = 'none';
-      ammoCount = 0;
-      shellEjected = false;
-      magazineLoaded = false;
-      gunTop.style.left = '20px';
-      return true;
-    }
-    magInserted = false;
-    return false;
+answerInput.addEventListener("input", () => {
+  const question = images[currentQuestion];
+  if (answerInput.value.trim().toLowerCase() === question.answer.toLowerCase()) {
+    body.style.backgroundColor = "#00FF00";
+    setTimeout(() => {
+      body.style.backgroundColor = "#f0f0f0";
+      currentQuestion++;
+      showQuestion();
+    }, 500);
   }
+});
 
-  function shoot() {
-    console.log('Shoot function called. magazineLoaded:', magazineLoaded, 'ammoCount:', ammoCount);
-    if (!magazineLoaded) {
-      alert('Najpierw załaduj magazynek!');
-      return;
-    }
-
-    if (ammoCount <= 0) {
-      alert('Brak amunicji!');
-      ejectMagazine();
-      return;
-    }
-
-    ammoCount--;
-    console.log('Ammo decremented, remaining:', ammoCount);
-
-    const bullet = document.createElement('div');
-    bullet.classList.add('bullet');
-    const gunRect = gun.getBoundingClientRect();
-    bullet.style.left = gunRect.right + 'px';
-    bullet.style.top = gunRect.top + gunRect.height / 2 + 'px';
-    document.body.appendChild(bullet);
-
-    gun.style.boxShadow = '0 0 15px 6px orange';
-    setTimeout(() => (gun.style.boxShadow = '2px 2px 6px #0008'), 100);
-
-    const startTime = performance.now();
-    function animate(currentTime) {
-      const elapsed = currentTime - startTime;
-      const progress = Math.min(elapsed / 800, 1);
-      bullet.style.left = gunRect.right + progress * 400 + 'px';
-
-      if (progress < 1) {
-        requestAnimationFrame(animate);
-      } else {
-        bullet.remove();
-      }
-    }
-    requestAnimationFrame(animate);
-  }
-
-  function ejectMagazine() {
-    mag.style.display = 'block';
-    mag.style.left = '920px';
-    mag.style.top = '940px';
-    mag.style.borderColor = '#222';
-    magInserted = false;
-    magazineLoaded = false;
-    ammoCount = 0;
-    loadedAmmoCount = 0;
-    gunTop.style.left = '20px';
-  }
-
-  gun.addEventListener('click', shoot);
-
-  function createAmmo() {
-    for (let i = 0; i < maxAmmo; i++) {
-      const ammo = document.createElement('div');
-      ammo.className = 'ammo';
-      ammo.style.left = (800 + (i % 6) * 25) + 'px';
-      ammo.style.top = (1000 + Math.floor(i / 6) * 30) + 'px';
-      scene.appendChild(ammo);
-
-      let ammoPos = { x: 800 + (i % 6) * 25, y: 1000 + Math.floor(i / 6) * 30 };
-      let isDraggingAmmo = false;
-      let startEx, startEy;
-
-      ammo.addEventListener('mousedown', (e) => {
-        e.preventDefault();
-        isDraggingAmmo = true;
-        startEx = e.clientX;
-        startEy = e.clientY;
-        ammo.style.cursor = 'grabbing';
-      });
-
-      document.addEventListener('mousemove', (e) => {
-        if (!isDraggingAmmo) return;
-        let dx = e.clientX - startEx;
-        let dy = e.clientY - startEy;
-        ammoPos.x += dx;
-        ammoPos.y += dy;
-        ammo.style.left = (ammoPos.x + translateX) + 'px';
-        ammo.style.top = (ammoPos.y + translateY) + 'px';
-        startEx = e.clientX;
-        startEy = e.clientY;
-      });
-
-      document.addEventListener('mouseup', () => {
-        if (!isDraggingAmmo) return;
-        isDraggingAmmo = false;
-        ammo.style.cursor = 'move';
-
-        const ammoRect = ammo.getBoundingClientRect();
-        const magRect = mag.getBoundingClientRect();
-
-        if (
-          ammoRect.right > magRect.left &&
-          ammoRect.left < magRect.right &&
-          ammoRect.bottom > magRect.top &&
-          ammoRect.top < magRect.bottom &&
-          loadedAmmoCount < maxAmmo
-        ) {
-          ammo.style.display = 'none';
-          loadedAmmoCount++;
-          mag.style.borderColor = 'limegreen';
-        }
-      });
-    }
-  }
-
-  let isDraggingMag = false;
-  let magPos = { x: 920, y: 940 };
-  let startEx, startEy;
-
-  mag.addEventListener('mousedown', (e) => {
-    e.preventDefault();
-    isDraggingMag = true;
-    startEx = e.clientX;
-    startEy = e.clientY;
-    mag.style.cursor = 'grabbing';
-  });
-
-  document.addEventListener('mousemove', (e) => {
-    if (!isDraggingMag) return;
-    let dx = e.clientX - startEx;
-    let dy = e.clientY - startEy;
-    magPos.x += dx;
-    magPos.y += dy;
-    mag.style.left = (magPos.x + translateX) + 'px';
-    mag.style.top = (magPos.y + translateY) + 'px';
-    startEx = e.clientX;
-    startEy = e.clientY;
-    checkMagInserted();
-  });
-
-  document.addEventListener('mouseup', () => {
-    if (isDraggingMag) {
-      isDraggingMag = false;
-      mag.style.cursor = 'grab';
-    }
-  });
-
-  playBtn.addEventListener('click', () => {
-    overlay.style.display = 'none';
-    createAmmo();
-    mag.style.display = 'block';
-    mag.style.left = '920px';
-    mag.style.top = '940px';
-    mag.style.borderColor = '#222';
-    magInserted = false;
-    magazineLoaded = false;
-    ammoCount = 0;
-    loadedAmmoCount = 0;
-    gunTop.style.left = '20px';
-    playBtn.style.display = 'none';
-  });
-
-  window.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      location.reload();
-    }
-  });
+startBtn.addEventListener("click", startQuiz);
 </script>
 </body>
 </html>
