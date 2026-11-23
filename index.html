@@ -10,8 +10,22 @@
             --primary-hover: #4338ca;
             --bg: #f8fafc;
             --card-bg: #ffffff;
+            --box-bg: #f1f5f9;
             --text: #1e293b;
             --text-light: #64748b;
+            --border: #e2e8f0;
+        }
+
+        /* Zmienne dla trybu ciemnego */
+        [data-theme="dark"] {
+            --primary: #6366f1;
+            --primary-hover: #818cf8;
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --box-bg: #334155;
+            --text: #f8fafc;
+            --text-light: #94a3b8;
+            --border: #475569;
         }
 
         body {
@@ -24,19 +38,43 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
+            transition: background-color 0.3s, color 0.3s;
         }
 
         .container {
             background: var(--card-bg);
             padding: 30px;
             border-radius: 16px;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
             width: 100%;
-            max-width: 600px;
+            max-width: 650px;
             text-align: center;
+            position: relative;
+            transition: background-color 0.3s;
+            border: 1px solid var(--border);
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--box-bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            width: auto;
+            transition: all 0.2s;
+        }
+
+        .theme-toggle:hover {
+            background: var(--border);
         }
 
         h1 {
+            margin-top: 15px;
             margin-bottom: 10px;
             color: var(--primary);
         }
@@ -47,11 +85,12 @@
         }
 
         .box {
-            background: #f1f5f9;
+            background: var(--box-bg);
             border-radius: 12px;
             padding: 20px;
             margin-bottom: 20px;
             text-align: left;
+            transition: background-color 0.3s;
         }
 
         .box h3 {
@@ -60,114 +99,280 @@
             font-size: 1.1rem;
         }
 
-        button {
+        button.main-btn {
             background-color: var(--primary);
             color: white;
             border: none;
-            padding: 12px 24px;
+            padding: 14px 24px;
             font-size: 1rem;
             border-radius: 8px;
             cursor: pointer;
             transition: background-color 0.2s;
             font-weight: 600;
             width: 100%;
+            margin-bottom: 10px;
         }
 
-        button:hover {
+        button.main-btn:hover {
             background-color: var(--primary-hover);
+        }
+
+        button.secondary-btn {
+            background-color: var(--text-light);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 0.95rem;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 600;
+        }
+
+        button.secondary-btn:hover {
+            opacity: 0.9;
         }
 
         .hidden {
             display: none;
+        }
+
+        li {
+            margin-bottom: 10px;
+            line-height: 1.5;
         }
     </style>
 </head>
 <body>
 
     <div class="container">
+        <button class="theme-toggle" id="themeBtn" onclick="toggleTheme()">🌙 Tryb ciemny</button>
+        
         <h1>Losownik Lektur</h1>
         <p class="subtitle">Sprawdź swoją wiedzę przed egzaminem!</p>
 
-        <button id="drawBtn" onclick="drawBook()">Wylosuj lekturę i pytania</button>
+        <button id="drawBtn" class="main-btn" onclick="drawBook()">Wylosuj lekturę i pytania</button>
 
         <div id="resultContainer" class="hidden">
             <div class="box">
                 <h3>Wylosowana lektura:</h3>
-                <p id="bookTitle" style="font-size: 1.2rem; font-weight: bold; margin: 0;"></p>
+                <p id="bookTitle" style="font-size: 1.25rem; font-weight: bold; margin: 0;"></p>
             </div>
 
             <div class="box">
-                <h3>Pytania powtórkowe:</h3>
-                <ul id="questionsList" style="padding-left: 20px; margin: 0;">
-                    <!-- Tutaj pojawią się pytania -->
-                </ul>
+                <h3>Wylosowane pytania powtórkowe:</h3>
+                <ul id="questionsList" style="padding-left: 20px; margin: 0;"></ul>
             </div>
             
-            <button onclick="drawBtn.click()" style="background-color: #64748b;">Wylosuj inną</button>
+            <button onclick="drawBook()" class="secondary-btn">Wylosuj inną lekturę</button>
         </div>
     </div>
 
     <script>
-        // Baza lektur i pytań (możesz ją łatwo rozbudowywać!)
+        // Obsługa trybu ciemnego
+        function toggleTheme() {
+            const body = document.body;
+            const btn = document.getElementById('themeBtn');
+            const currentTheme = body.getAttribute('data-theme');
+            
+            if (currentTheme === 'dark') {
+                body.removeAttribute('data-theme');
+                btn.innerText = '🌙 Tryb ciemny';
+                localStorage.setItem('theme', 'light');
+            } else {
+                body.setAttribute('data-theme', 'dark');
+                btn.innerText = '☀️ Tryb jasny';
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        // Zapamiętywanie wyboru trybu po odświeżeniu strony
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.setAttribute('data-theme', 'dark');
+            document.getElementById('themeBtn').innerText = '☀️ Tryb jasny';
+        }
+
+        // Rozbudowana baza lektur (Egzamin Ósmoklasisty + Matura)
         const database = [
             {
                 title: "Pan Tadeusz – Adam Mickiewicz",
                 questions: [
                     "Kto był sędzią i gdzie mieszkał?",
                     "Jaka była historia konfliktu rodu Sopliców z Horeszkami?",
-                    "Kto okazał się księdzem Robakiem?",
-                    "Jaką funkcję pełnił Wojski w Soplicowie?"
+                    "Kim naprawdę okazał się ksiądz Robak i dlaczego ukrywał swoją tożsamość?",
+                    "Jaką funkcję pełnił Wojski w Soplicowie?",
+                    "Czym był koncert Jankiela i jakie wydarzenia historyczne przedstawiał?",
+                    "Dlaczego Tadeusz i Zosia wzięli ślub, a nie Tadeusz i Telimena?",
+                    "Jak zakończył się spór o zamek między Soplicami a Hrabią?"
                 ]
             },
             {
                 title: "Zemsta – Aleksander Fredro",
                 questions: [
-                    "O co kłócili się Cześnik i Rejent?",
+                    "O co kłócili się Cześnik Raptusiewicz i Rejent Milczek?",
                     "Kto i dlaczego chciał naprawić mur graniczny?",
-                    "Jakie cechy charakteru reprezentuje Dyndalski?",
-                    "W jaki sposób zakończył się konflikt między sąsiadami?"
+                    "Jakie cechy charakteru reprezentuje Papkin?",
+                    "W jaki sposób zakończył się konflikt między sąsiadami?",
+                    "Jaki podstęp wymyślił Cześnik, aby zemścić się na Rejencie?",
+                    "Co symbolizuje przysłowie 'Niech się dzieje wola nieba, z nią się zawsze zgadzać trzeba'?"
                 ]
             },
             {
                 title: "Kamienie na szaniec – Aleksander Kamiński",
                 questions: [
-                    "Jak nazywał się pseudonim grupowy głównych bohaterów (Małego Sabotażu)?",
-                    "Przebieg akcji pod Arsenałem – kto został odbity?",
-                    "Jak zginął Rudy?",
-                    "W jaki sposób Zośka i Alek stracili życie?"
+                    "Jak nazywała się organizacja konspiracyjna, do której należeli główni bohaterowie?",
+                    "Opisz przebieg akcji pod Arsenałem – kogo i w jaki sposób odbito?",
+                    "Jakie akcje Małego Sabotażu przeprowadzali Alek, Rudy i Zośka?",
+                    "W jakich okolicznościach zginęli Rudy, Alek i Zośka?",
+                    "Co oznacza tytuł utworu 'Kamienie na szaniec' i z jakiego wiersza pochodzi?"
                 ]
             },
             {
                 title: "Balladyna – Juliusz Słowacki",
                 questions: [
-                    "Co zbierały tytułowa Balladyna i Alina w lesie?",
+                    "Co zbierały tytułowa Balladyna i Alina w lesie i jaki był cel tej rywalizacji?",
                     "Kto pomógł Balladynie pozbyć się siostry i zdobyć władzę?",
                     "Jaką rolę w utworze odgrywa królowa Gopła – Goplana?",
-                    "Jaki los spotkał Balladynę na końcu dramatu?"
+                    "Jaki los spotkał Balladynę na końcu dramatu i kto wymierzył jej sprawiedliwość?",
+                    "Co symbolizuje krwawa plama na czole Balladyny?"
+                ]
+            },
+            {
+                title: "Dziady cz. II – Adam Mickiewicz",
+                questions: [
+                    "Czym był tytułowy obrzęd Dziadów i kto mu przewodniczył?",
+                    "Jakie trzy kategorie duchów pojawiały się podczas obrzędu?",
+                    "Jaka nauka płynęła od duchów lekkich (Józia i Rózi)?",
+                    "Dlaczego Widmo Złego Pana nie mogło zaznać spokoju po śmierci?",
+                    "Czego zabrakło w życiu Zosi (ducha pośredniego)?"
+                ]
+            },
+            {
+                title: "Dziady cz. III – Adam Mickiewicz",
+                questions: [
+                    "Na czym polega przemiana Gustawa w Konrada?",
+                    "O co Konrad oskarża Boga w Wielkiej Improwizacji?",
+                    "Czym różni się postawa księdza Piotra od postawy Konrada?",
+                    "Co oznacza widzenie księdza Piotra i kim jest tajemniczy '44'?",
+                    "Jak przedstawione jest polskie społeczeństwo w scenie 'Salon Warszawski'?"
+                ]
+            },
+            {
+                title: "Mały Książę – Antoine de Saint-Exupéry",
+                questions: [
+                    "Jakie planety odwiedził Mały Książę przed przybyciem na Ziemię i kogo na nich spotkał?",
+                    "Czego Lis nauczył Małego Księcia o przyjaźni i 'oswajaniu'?",
+                    "Dlaczego Mały Książę opuścił swoją planetę i ukochaną Różę?",
+                    "Kim są 'dorośli' w oczach Małego Księcia?",
+                    "W jaki sposób Mały Książę powrócił na swoją planetę?"
+                ]
+            },
+            {
+                title: "Opowieść wigilijna – Charles Dickens",
+                questions: [
+                    "Kim był Ebenezer Scrooge na początku utworu i jaki miał stosunek do świąt?",
+                    "Kto jako pierwszy odwiedził Scrooge'a w noc wigilijną i przed czym go ostrzegł?",
+                    "Co pokazały Scrooge'owi trzy kolejne duchy (Przeszłych, Teraźniejszych i Przyszłych Świąt)?",
+                    "W jaki sposób zmieniło się zachowanie Scrooge'a po przemianie?"
+                ]
+            },
+            {
+                title: "Quo vadis – Henryk Sienkiewicz",
+                questions: [
+                    "Kim byli Winicjusz i Ligia oraz co stanęło na przeszkodzie ich miłości?",
+                    "Jaką rolę odegrał Petroniusz na dworze cesarza Nerona?",
+                    "Dlaczego Neron kazał podpalić Rzym i kogo o to oskarżył?",
+                    "Jaką przemianę przeszedł Marek Winicjusz pod wpływem chrześcijan?",
+                    "Co oznacza tytułowe pytanie 'Quo vadis, Domine?' i w jakiej sytuacji pada?"
+                ]
+            },
+            {
+                title: "Latarnik – Henryk Sienkiewicz",
+                questions: [
+                    "Kim był Skawiński i dlaczego trafił na latarnię morską w Aspinwall?",
+                    "Jaka książka sprawiła, że Skawiński zapomniał o swoich obowiązkach?",
+                    "Dlaczego Skawiński stracił posadę latarnika?",
+                    "Czym dla głównego bohatera była ojczyzna?"
+                ]
+            },
+            {
+                title: "Lalka – Bolesław Prus",
+                questions: [
+                    "Kim był Stanisław Wokulski i w jaki sposób dorobił się majątku?",
+                    "Jaki stosunek do Wokulskiego miała Izabela Łęcka i arystokracja?",
+                    "Kim był Ignacy Rzecki i jakie ideały wyznawał?",
+                    "Co symbolizuje tytułowa 'lalka' w powieści?",
+                    "Jakie były przyczyny klęski życiowej Wokulskiego?"
+                ]
+            },
+            {
+                title: "Zbrodnia i kara – Fiodor Dostojewski",
+                questions: [
+                    "Jaka była teoria Rodiona Raskolnikowa dotycząca ludzi 'zwykłych' i 'niezwykłych'?",
+                    "Dlaczego Raskolnikow zamordował lichwiarkę Alonę Iwanowną i jej siostrę Lizawietę?",
+                    "Jaką rolę w duchowym odrodzeniu Raskolnikowa odegrała Sonia Marmieładowa?",
+                    "W jaki sposób sędzia śledczy Porfiry Pietrowicz rozpracował Raskolnikowa?",
+                    "Jak zakończyła się historia głównego bohatera na Syberii?"
+                ]
+            },
+            {
+                title: "Wesele – Stanisław Wyspiański",
+                questions: [
+                    "Kto brał ślub na weselu w Bronowicach i jakie grupy społeczne się tam spotkały?",
+                    "Kto i komu ukazał się w akcie II (osoby dramatu)?",
+                    "Co symbolizują: Złoty Róg, Chochoł oraz Chocholi taniec?",
+                    "Dlaczego chłopi i inteligencja nie potrafili się porozumieć w sprawie powstania?"
+                ]
+            },
+            {
+                title: "Przedwiośnie – Stefan Żeromski",
+                questions: [
+                    "Czym były 'szklane domy', o których opowiadał Seweryn Baryka swojemu synowi?",
+                    "Jak wyglądało zderzenie marzeń Cezarego Baryki z rzeczywistością po przyjeździe do Polski?",
+                    "Jakie trzy koncepcje odbudowy Polski przedstawiono w powieści (Szymon Gajowiec, Antoni Lulek, Cezary Baryka)?",
+                    "Jaką rolę w życiu Cezarego odegrał pobyt w Nawłoci?"
+                ]
+            },
+            {
+                title: "Tango – Sławomir Mrożek",
+                questions: [
+                    "O co buntował się Artur przeciwko swoim rodzicom (Stomilowi i Eleonorze)?",
+                    "W jaki sposób Edek przejął władzę w domu Stomilów?",
+                    "Co symbolizuje finałowe tango tańczone przez Edka i Eugeniusza?",
+                    "Czym charakteryzuje się świat przedstawiony w dramacie Mrożka?"
+                ]
+            },
+            {
+                title: "Rok 1984 – George Orwell",
+                questions: [
+                    "Na czym polegała kontrola obywateli w Oceanii (Wielki Brat, teleekrany, Policja Myśli)?",
+                    "Czym była 'nowomowa' i jaki był jej cel?",
+                    "W jaki sposób Winston Smith próbował buntować się przeciwko systemowi?",
+                    "Co stało się z Winstonem w pokoju 101?"
                 ]
             }
         ];
 
         function drawBook() {
-            // Losowanie indeksu z tablicy
+            // Losowanie lektury
             const randomIndex = Math.floor(Math.random() * database.length);
             const selected = database[randomIndex];
 
-            // Wyświetlenie wylosowanej lektury
             document.getElementById('bookTitle').innerText = selected.title;
 
-            // Wyświetlenie pytań
+            // Mieszanie pytań dla danej lektury i wybranie maksymalnie 3 losowych
+            const shuffledQuestions = [...selected.questions].sort(() => 0.5 - Math.random());
+            const selectedQuestions = shuffledQuestions.slice(0, 3);
+
             const listElement = document.getElementById('questionsList');
-            listElement.innerHTML = ''; // Wyczyść poprzednie pytania
+            listElement.innerHTML = '';
             
-            selected.questions.forEach(q => {
+            selectedQuestions.forEach(q => {
                 const li = document.createElement('li');
-                li.style.marginBottom = "8px";
                 li.innerText = q;
                 listElement.appendChild(li);
             });
 
-            // Pokaż kontener z wynikiem
             document.getElementById('resultContainer').classList.remove('hidden');
         }
     </script>
