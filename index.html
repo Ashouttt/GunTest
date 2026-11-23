@@ -1,180 +1,176 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Quiz: Juke's Towers of Hell</title>
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    background-color: #f0f0f0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-    margin: 0;
-    padding: 20px;
-    transition: background-color 0.3s;
-    text-align: center;
-  }
-  h1 { font-size: 32px; margin-bottom: 10px; }
-  p { font-size: 20px; margin: 5px; }
-  .linkText { font-size: 24px; cursor: pointer; color: #007BFF; text-decoration: underline; }
-  #startBtn {
-    font-size: 24px;
-    padding: 15px 30px;
-    border: none;
-    border-radius: 10px;
-    background-color: #007BFF;
-    color: white;
-    cursor: pointer;
-    margin-top: 30px;
-  }
-  #countdown { font-size: 48px; font-weight: bold; margin-bottom: 20px; display: none; }
-  #timer { font-size: 24px; margin-bottom: 20px; display: none; }
-  #quizImage { max-width: 80%; max-height: 400px; margin-bottom: 20px; display: none; }
-  #answerBox { display: flex; flex-direction: column; align-items: center; display: none; }
-  input[type="text"] { font-size: 18px; padding: 10px; width: 300px; border-radius: 5px; border: 1px solid #ccc; margin-bottom: 10px; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Losownik Lektur i Pytań</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-light: #64748b;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+
+        p.subtitle {
+            color: var(--text-light);
+            margin-bottom: 30px;
+        }
+
+        .box {
+            background: #f1f5f9;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .box h3 {
+            margin-top: 0;
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-weight: 600;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
 </head>
 <body>
 
-<h1>Made by Ashout</h1>
-<p>for <span class="linkText" id="serpluz">Serpluz</span></p>
-<p>and for <span class="linkText" id="diamond">Diamond Boi</span></p>
-<button id="startBtn">Start Quiz</button>
+    <div class="container">
+        <h1>Losownik Lektur</h1>
+        <p class="subtitle">Sprawdź swoją wiedzę przed egzaminem!</p>
 
-<div id="countdown"></div>
-<div id="timer"></div>
-<img id="quizImage" src="" alt="Quiz Image">
-<div id="answerBox">
-  <input type="text" id="answerInput" placeholder="Type your answer..." autocomplete="off">
-</div>
+        <button id="drawBtn" onclick="drawBook()">Wylosuj lekturę i pytania</button>
 
-<script>
-const images = [
-  { src: "https://static.wikia.nocookie.net/ktoh/images/f/fc/ToH_R1_Revamp.png/revision/latest?cb=20250716171641", answer: "Tower of Hecc" },
-  { src: "https://static.wikia.nocookie.net/ktoh/images/5/59/ToCP_image_hq.png/revision/latest?cb=20220912002351", answer: "Tower of Cruel Punishment" },
-  { src: "https://static.wikia.nocookie.net/ktoh/images/4/4b/CoLS_R1_Revamp.png/revision/latest?cb=20250310183034", answer: "Citadel of Laptop Splitting" },
-  { src: "https://static.wikia.nocookie.net/ktoh/images/0/05/ToHH_image_hq.png/revision/latest?cb=20221207023038", answer: "Tower of Hopeless Hell" },
-  { src: "https://static.wikia.nocookie.net/ktoh/images/6/60/ToTS_R1_Revamp.png/revision/latest?cb=20250310183111", answer: "Tower of True Skill" },
-  { src: "https://static.wikia.nocookie.net/ktoh/images/3/3b/ToBK_image_hq.png/revision/latest?cb=20220912002300", answer: "Tower of Bloodthirsty Kenos" },
-  { src: "https://static.wikia.nocookie.net/ktoh/images/a/ae/NEW_ToDT.png/revision/latest?cb=20250424182737", answer: "Tower of Double Trouble" },
-  { src: "https://static.wikia.nocookie.net/ktoh/images/8/81/ToII_image_hq.png/revision/latest?cb=20220924200429", answer: "Tower of Immense Ire" },
-  { src: "https://static.wikia.nocookie.net/ktoh/images/1/1a/CoWS-New.png/revision/latest?cb=20250301143953", answer: "Citadel of Wacky Strategy" },
-  { src: "https://static.wikia.nocookie.net/ktoh/images/4/4c/SoUR_image_hq.png/revision/latest?cb=20220924200342", answer: "Steeple of Uninstalling Roblox" },
-  { src: "https://static.wikia.nocookie.net/ktoh/images/7/7d/ToPS-New.png/revision/latest?cb=20250301141304", answer: "Tower of Phone Snapping" },
-  { src: "https://static.wikia.nocookie.net/ktoh/images/0/05/Tower_of_Utter_Garbage.png/revision/latest?cb=20250618122432", answer: "Tower of Fatness" },
-  { src: "https://static.wikia.nocookie.net/ktoh/images/1/10/ToBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB.png/revision/latest?cb=20241016212510", answer: "Tower of Big Blocky Beefy Buttons" },
-  { src: "https://static.wikia.nocookie.net/ktoh/images/0/06/ToBBB_image_hq.png/revision/latest?cb=20220912002240", answer: "Tower of Beat Block Berserk" },
-  { src: "https://static.wikia.nocookie.net/ktoh/images/9/9c/ToAF_image_hq.png/revision/latest?cb=20220918225748", answer: "Tower of Astral Fusion" },
-  { src: "https://static.wikia.nocookie.net/ktoh/images/f/fc/ToFaF-New.png/revision/latest?cb=20250301141847", answer: "Tower of Falling and Failing" },
-  { src: "https://static.wikia.nocookie.net/ktoh/images/8/81/CoIV_image_hq.png/revision/latest?cb=20221011221103", answer: "Citadel of Infinite Void" },
-  { src: "https://static.wikia.nocookie.net/ktoh/images/a/af/SoO_image_hq.png/revision/latest?cb=20221007213244", answer: "Steeple of Overgrowth" },
-  { src: "https://static.wikia.nocookie.net/ktoh/images/4/40/ToFM_image_hq.png/revision/latest?cb=20220911194224", answer: "Tower of Fractured Memories" },
-  { src: "https://static.wikia.nocookie.net/ktoh/images/b/b3/Tofn_new.png/revision/latest?cb=20241020172709", answer: "Tower of Frightening Nightmares" },
-  { src: "https://static.wikia.nocookie.net/ktoh/images/8/8c/ToNI_R1_Revamp.png/revision/latest?cb=20250310183335", answer: "Tower of Noticeable Infuriation" },
-  { src: "https://static.wikia.nocookie.net/ktoh/images/5/57/TT_R1_Revamp.png/revision/latest?cb=20250310182929", answer: "Thanos Tower" },
-  { src: "https://static.wikia.nocookie.net/ktoh/images/2/26/SoBJ_image_hq.png/revision/latest?cb=20221007213044", answer: "Steeple of Beginner's Journey" },
-  { src: "https://static.wikia.nocookie.net/ktoh/images/0/05/SoDS_image_hq.png/revision/latest?cb=20221007213059", answer: "Steeple of Devil's Snare" },
-  { src: "https://static.wikia.nocookie.net/ktoh/images/e/e4/ToES-new.png/revision/latest?cb=20250301143039", answer: "Tower of Eternal Suffering" },
-  { src: "https://static.wikia.nocookie.net/ktoh/images/4/42/ToJ_image_hq.png/revision/latest?cb=20220909163944", answer: "Tower of Jazz" },
-  { src: "https://static.wikia.nocookie.net/ktoh/images/e/ec/SoIF_image_hq.png/revision/latest?cb=20221007213155", answer: "Steeple of Infectious Foliage" },
-  { src: "https://static.wikia.nocookie.net/ktoh/images/4/4c/SoUR_image_hq.png/revision/latest?cb=20220924200342", answer: "Tower of Cold Hands" }
-];
+        <div id="resultContainer" class="hidden">
+            <div class="box">
+                <h3>Wylosowana lektura:</h3>
+                <p id="bookTitle" style="font-size: 1.2rem; font-weight: bold; margin: 0;"></p>
+            </div>
 
-let currentQuestion = 0;
-let timerInterval;
+            <div class="box">
+                <h3>Pytania powtórkowe:</h3>
+                <ul id="questionsList" style="padding-left: 20px; margin: 0;">
+                    <!-- Tutaj pojawią się pytania -->
+                </ul>
+            </div>
+            
+            <button onclick="drawBtn.click()" style="background-color: #64748b;">Wylosuj inną</button>
+        </div>
+    </div>
 
-const answerInput = document.getElementById("answerInput");
-const quizImage = document.getElementById("quizImage");
-const timerDisplay = document.getElementById("timer");
-const countdownDisplay = document.getElementById("countdown");
-const body = document.body;
-const startBtn = document.getElementById("startBtn");
-const answerBox = document.getElementById("answerBox");
-const serpluzText = document.getElementById("serpluz");
-const diamondText = document.getElementById("diamond");
+    <script>
+        // Baza lektur i pytań (możesz ją łatwo rozbudowywać!)
+        const database = [
+            {
+                title: "Pan Tadeusz – Adam Mickiewicz",
+                questions: [
+                    "Kto był sędzią i gdzie mieszkał?",
+                    "Jaka była historia konfliktu rodu Sopliców z Horeszkami?",
+                    "Kto okazał się księdzem Robakiem?",
+                    "Jaką funkcję pełnił Wojski w Soplicowie?"
+                ]
+            },
+            {
+                title: "Zemsta – Aleksander Fredro",
+                questions: [
+                    "O co kłócili się Cześnik i Rejent?",
+                    "Kto i dlaczego chciał naprawić mur graniczny?",
+                    "Jakie cechy charakteru reprezentuje Dyndalski?",
+                    "W jaki sposób zakończył się konflikt między sąsiadami?"
+                ]
+            },
+            {
+                title: "Kamienie na szaniec – Aleksander Kamiński",
+                questions: [
+                    "Jak nazywał się pseudonim grupowy głównych bohaterów (Małego Sabotażu)?",
+                    "Przebieg akcji pod Arsenałem – kto został odbity?",
+                    "Jak zginął Rudy?",
+                    "W jaki sposób Zośka i Alek stracili życie?"
+                ]
+            },
+            {
+                title: "Balladyna – Juliusz Słowacki",
+                questions: [
+                    "Co zbierały tytułowa Balladyna i Alina w lesie?",
+                    "Kto pomógł Balladynie pozbyć się siostry i zdobyć władzę?",
+                    "Jaką rolę w utworze odgrywa królowa Gopła – Goplana?",
+                    "Jaki los spotkał Balladynę na końcu dramatu?"
+                ]
+            }
+        ];
 
-serpluzText.addEventListener("click", () => window.open("https://www.youtube.com/@SerpluzEToH", "_blank"));
-diamondText.addEventListener("click", () => window.open("https://www.youtube.com/@DiamondBoiRBX", "_blank"));
+        function drawBook() {
+            // Losowanie indeksu z tablicy
+            const randomIndex = Math.floor(Math.random() * database.length);
+            const selected = database[randomIndex];
 
-function shuffle(array) {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-}
+            // Wyświetlenie wylosowanej lektury
+            document.getElementById('bookTitle').innerText = selected.title;
 
-function startQuiz() {
-  startBtn.style.display = "none";
-  serpluzText.style.display = "none";
-  diamondText.style.display = "none";
-  document.querySelector("h1").style.display = "none";
-  document.querySelectorAll("p").forEach(p => p.style.display = "none");
-  startCountdown();
-}
+            // Wyświetlenie pytań
+            const listElement = document.getElementById('questionsList');
+            listElement.innerHTML = ''; // Wyczyść poprzednie pytania
+            
+            selected.questions.forEach(q => {
+                const li = document.createElement('li');
+                li.style.marginBottom = "8px";
+                li.innerText = q;
+                listElement.appendChild(li);
+            });
 
-function startCountdown() {
-  let count = 3;
-  countdownDisplay.style.display = "block";
-  countdownDisplay.textContent = count;
-  const interval = setInterval(() => {
-    count--;
-    if (count > 0) countdownDisplay.textContent = count;
-    else {
-      clearInterval(interval);
-      countdownDisplay.style.display = "none";
-      startTimer(30 * 60);
-      showQuestion();
-    }
-  }, 1000);
-}
+            // Pokaż kontener z wynikiem
+            document.getElementById('resultContainer').classList.remove('hidden');
+        }
+    </script>
 
-function startTimer(duration) {
-  let time = duration;
-  timerDisplay.style.display = "block";
-  timerInterval = setInterval(() => {
-    const minutes = Math.floor(time / 60);
-    const seconds = time % 60;
-    timerDisplay.textContent = `${String(minutes).padStart(2,"0")}:${String(seconds).padStart(2,"0")}`;
-    if (--time < 0) {
-      clearInterval(timerInterval);
-      timerDisplay.textContent = "Time's up!";
-    }
-  }, 1000);
-}
-
-function showQuestion() {
-  if (currentQuestion >= images.length) {
-    quizImage.style.display = "none";
-    timerDisplay.style.display = "none";
-    answerBox.style.display = "none";
-    alert("Quiz finished!");
-    return;
-  }
-  const question = images[currentQuestion];
-  quizImage.src = question.src;
-  quizImage.style.display = "block";
-  answerBox.style.display = "flex";
-  answerInput.value = "";
-  answerInput.focus();
-}
-
-answerInput.addEventListener("input", () => {
-  const question = images[currentQuestion];
-  if (answerInput.value.trim().toLowerCase() === question.answer.toLowerCase()) {
-    body.style.backgroundColor = "#00FF00";
-    setTimeout(() => {
-      body.style.backgroundColor = "#f0f0f0";
-      currentQuestion++;
-      showQuestion();
-    }, 500);
-  }
-});
-
-startBtn.addEventListener("click", startQuiz);
-</script>
 </body>
 </html>
